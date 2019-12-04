@@ -2,7 +2,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-import skimage.transform, skimage.io
+import skimage.transform, skimage.io, skimage.color
 
 from torch.autograd import Variable
 import torch
@@ -30,10 +30,15 @@ def image_loader(device, image_name):
     a = skimage.transform.resize(image, (224,224), preserve_range=True)
     a = np.copy(a).astype('uint8')
 
+    # Convert ro RGB if grayscale
+    if a.ndim == 2:
+        a = skimage.color.gray2rgb(a)
+
     loader = transforms.Compose([
         transforms.ToTensor(), 
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
+
     image = loader(a)
     image = Variable(image, requires_grad=False)
     return image.to(device)
@@ -52,15 +57,21 @@ def compute_statistics(feats):
     num_feats = feats.shape[1]
 
     # Activations
-    mean_feats = feats.mean(axis=0)
-    prop_m = np.sum(mean_feats == 0) / float(mean_feats.shape[0])
-    num_zero_mean = np.sum(mean_feats == 0)
+    prop_m = np.sum(feats == 0, axis=1) / float(feats.shape[1])
+    assert prop_m.shape[0] == feats.shape[0]
+    prop_m = np.mean(prop_m)
 
-    # STD of features
-    std_feats = feats.std(axis=0) # std along image dimension
-    prop_s = np.sum(std_feats == 0) / float(std_feats.shape[0])
+    return num_feats, prop_m
 
-    return num_feats, prop_m, prop_s, num_zero_mean
+if __name__ == "__main__":
+    if torch.cuda.is_available():
+        DEVICE = torch.device("cuda:0")
+    else:
+        DEVICE = torch.device("cpu")
+    print "Device:", DEVICE
 
-
+    import os
+    im = os.environ["GROUP_HOME"] + "/datasets/tiny-imagenet-200/val/images/val_0.JPEG"
+    a = image_loader(DEVICE, im)
+    print a.size()
 
