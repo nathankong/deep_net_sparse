@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 import pickle
 import os
-os.environ["TORCH_HOME"] = os.environ["GROUP_HOME"] + "/deep_models/"
+os.environ["TORCH_HOME"] = "/mnt/fs5/nclkong/deep_models/"
 
 import numpy as np
 import collections
@@ -33,7 +33,7 @@ def main(model_name, images_dir):
     feature_layer_dict = m_info.get_feature_layer_index_dictionary()
     classifier_layer_dict = m_info.get_classifier_layer_index_dictionary()
     layers_order = m_info.get_layers()
-    m = load_model(model_name)
+    m = load_model(model_name).to(DEVICE)
 
     # A dictionary that keeps saving the activations as they come
     activations = collections.defaultdict(list)
@@ -43,7 +43,9 @@ def main(model_name, images_dir):
 
     # Get Conv2d/Pooling layer activations
     for i, module in enumerate(m.features):
-    	if type(module)==nn.Conv2d or type(module)==nn.MaxPool2d:
+    	#if type(module)==nn.Conv2d or type(module)==nn.MaxPool2d:
+    	if type(module)==nn.Conv2d or type(module)==nn.ReLU or type(module)==nn.MaxPool2d:
+    	#if type(module)==nn.ReLU or type(module)==nn.MaxPool2d:
             name = feature_layer_dict[i]
     	    module.register_forward_hook(partial(save_activation, name))
             #print i, module

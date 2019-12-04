@@ -57,7 +57,7 @@ def compute_statistics(feats):
     num_feats = feats.shape[1]
 
     # Activations
-    prop_m = np.sum(feats.mean(axis=0) == 0) / float(feats.shape[1])
+    prop_m = np.mean(np.sum(feats==0, axis=1) / float(feats.shape[1]))
 
     return num_feats, prop_m
 
