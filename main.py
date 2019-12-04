@@ -61,7 +61,7 @@ def main(model_name, images_dir):
     m.eval()
     for step, (images,y) in enumerate(data_loader):
         # TODO: DEBUG, use 1/10 of the batches for now, for runtime
-        if (step+1) % 100 == 0:
+        if (step+1) % 1 == 0:
             print "Batch {}".format(step+1)
             _ = m(images.to(DEVICE))
 
