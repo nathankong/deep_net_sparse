@@ -22,6 +22,7 @@ if torch.cuda.is_available():
     DEVICE = torch.device("cuda:0")
 else:
     DEVICE = torch.device("cpu")
+DEVICE = torch.device("cpu")
 print "Device:", DEVICE
 
 FIGURE_DIR = "./figures/"
@@ -39,7 +40,7 @@ def main(model_name, images_dir):
     activations = collections.defaultdict(list)
     def save_activation(name, mod, inp, out):
         #print name, out.cpu().size()
-        activations[name].append(out.cpu())
+        activations[name].append(np.copy(out.cpu().detach().numpy()))
 
     # Get Conv2d/Pooling layer activations
     for i, module in enumerate(m.features):
@@ -65,16 +66,15 @@ def main(model_name, images_dir):
         # TODO: DEBUG, use 1/10 of the batches for now, for runtime
         if (step+1) % 1 == 0:
             print "Batch {}".format(step+1)
-            _ = m(images.to(DEVICE))
+            _ = m(images)
 
-    activations = {name: torch.cat(outputs, 0) for name, outputs in activations.items()}
+    activations = {name: np.concatenate(outputs, axis=0) for name, outputs in activations.items()}
 
     n_feats_all = list()
     n_zero_mean_all = list()
     layer_feature_stds = list()
     for layer in layers_order:
         features = activations[layer]
-        features = features.data.cpu().numpy()
         n_feats, n_zero_mean = compute_statistics(features)
         n_feats_all.append(n_feats)
         n_zero_mean_all.append(n_zero_mean)
